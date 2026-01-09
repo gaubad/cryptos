@@ -37,7 +37,11 @@
 #define BLOCK_SIZE 64
 #define TAG_SIZE   32
 
+#define MAX_MSG_LENGTH  1024
+#define MAX_AAD_LENGTH  256
 
+
+// Test Master key - 32 bytes
 static const uint8_t master_key[32] = {
     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
     0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
@@ -45,8 +49,9 @@ static const uint8_t master_key[32] = {
     0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F
 };
 
-
-
+//////////////////////////////////////
+// Verify the HMAc-AEAD outputs
+//////////////////////////////////////
 static size_t expected_ciphertext_len(size_t msg_len)
 {
     size_t rem = msg_len % BLOCK_SIZE;
@@ -59,15 +64,17 @@ static size_t expected_ciphertext_len(size_t msg_len)
     }
 }
 
-
+//////////////////////////////////////////
+// Run HMAC-AEAD Tests
+/////////////////////////////////////////
 static int run_test_case(size_t msg_len, size_t aad_len)
 {
-    uint8_t msg[256];
-    uint8_t aad[256];
-    uint8_t ciphertext[512];
-    uint8_t decrypted[256];
-    uint8_t iv[64];
-    uint8_t tag[TAG_SIZE];
+    uint8_t msg[MAX_MSG_LENGTH];
+    uint8_t aad[MAX_AAD_LENGTH];
+    uint8_t ciphertext[MAX_MSG_LENGTH + 80];
+    uint8_t decrypted[MAX_MSG_LENGTH];
+    uint8_t iv[SIZE_IV];
+    uint8_t tag[SIZE_TAG];
 
     size_t ct_len = 0;
     size_t dec_len = 0;
@@ -150,7 +157,9 @@ static int run_test_case(size_t msg_len, size_t aad_len)
     return 0;
 }
 
-
+/////////////////////////////////////////////////
+// Enrty point for HMAC AEAD and Crypto tests
+////////////////////////////////////////////////
 int main() 
 {
     printf("***** Starting HMAC AEAD Tests ******** \n\n");
@@ -159,7 +168,7 @@ int main()
     run_test_case(55, 30);
     run_test_case(64, 64);
     run_test_case(260, 128);
-    run_test_case(260, 0);
+    run_test_case(1024, 35);
 
     printf("******Done******\n\n");
 

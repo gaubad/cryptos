@@ -38,7 +38,6 @@
 
 #define SIZE_B_ENC                  64
 #define SIZE_B_AUTH                 64
-#define SIZE_IV                     64
 
 #define SIZE_HALF_IV                (SIZE_IV / 2)
 
@@ -52,11 +51,7 @@
 
 #define SIZE_ENC_DEC_KEY            32
 
-#define SIZE_SHA256_OUTPUT_BLOCK    32
-#define SIZE_SHA256_INPUT_BLOCK     64
-
 #define SIZE_KEY_STREAM_BLOCK       SIZE_SHA256_OUTPUT_BLOCK 
-#define SIZE_TAG                    SIZE_SHA256_OUTPUT_BLOCK
 
 #define MAX_MULTI_HMAC_BUFS         7
 

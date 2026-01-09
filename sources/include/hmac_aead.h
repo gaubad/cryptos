@@ -17,6 +17,14 @@
 
 
 #define SIZE_KEY_MASTER                     32
+#define SIZE_IV                             64
+
+#define SIZE_SHA256_OUTPUT_BLOCK            32
+#define SIZE_SHA256_INPUT_BLOCK             64
+
+#define SIZE_TAG                            SIZE_SHA256_OUTPUT_BLOCK
+
+
 
 int32_t hmac_aead_enc(const uint8_t *msg, size_t msg_len, const uint8_t *aad, 
                         size_t aad_len, const uint8_t *key, uint8_t *enc_msg_buf, 
