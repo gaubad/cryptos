@@ -539,23 +539,20 @@ static int32_t hmac_aead_verify_auth(const uint8_t* ciphertext, size_t ciphertex
                                     size_t aad_len,uint8_t *key_auth, const uint8_t* tag_ref, 
                                     size_t *len_nopad_ciphertext )
 {
-    uint64_t    block_length_aad = 0;
-    uint64_t    block_length_msg = 0;
+    uint64_t            block_length_aad = 0;
+    uint64_t            block_length_msg = 0;
 
-    size_t      aad_full_len = 0;
-    uint8_t     aad_rem_len  = 0;
-    size_t      ct_full_len = 0;             
-    uint8_t     ct_rem_len  = 0;
-    uint8_t     hmac_buf_count = 0; 
+    size_t              aad_full_len = 0;
+    uint8_t             aad_rem_len  = 0;
+    size_t              ct_full_len = 0;             
+    uint8_t             ct_rem_len  = 0;
+    uint8_t             hmac_buf_count = 0; 
 
-    uint8_t     *len_aad_ptr;
-    uint8_t     *len_ct_ptr;
+    const uint8_t       *ct_ptr;
+    size_t              ct_remaining;
 
-    uint8_t     *ct_ptr;
-    size_t      ct_remaining;
-
-    uint8_t     tag[SIZE_TAG] = {0};
-    uint8_t     aad_ct_block[SIZE_HMAC_INPUT_BLOCK] = {0};
+    uint8_t             tag[SIZE_TAG] = {0};
+    uint8_t             aad_ct_block[SIZE_HMAC_INPUT_BLOCK] = {0};
 
     hmac_multi_buf_t    bufs_hmac[MAX_MULTI_HMAC_BUFS];
  
@@ -616,7 +613,7 @@ static int32_t hmac_aead_verify_auth(const uint8_t* ciphertext, size_t ciphertex
         cmn_memcpy(aad_ct_block, (aad + aad_full_len), aad_rem_len);
 
         // Fill rest of the buffer with encrypted data
-        if ( ciphertext_len <= (SIZE_HMAC_INPUT_BLOCK - aad_rem_len) )
+        if ( ciphertext_len <= (size_t)(SIZE_HMAC_INPUT_BLOCK - aad_rem_len) )
         { 
             // All encrypted msg data can fit in the remaining space                   
             cmn_memcpy( (aad_ct_block + aad_rem_len), ct_ptr, ct_remaining);
@@ -676,7 +673,7 @@ static int32_t hmac_aead_verify_auth(const uint8_t* ciphertext, size_t ciphertex
 ///          buffer provided. It authenticates the cipher text first, and then 
 ///          decrypts only if the authentication passes.   
 /// 
-/// @param enc_msg - Message to be decrypted and authenticated 
+/// @param enc_msg - Encrypted message to be decrypted and authenticated 
 /// @param enc_msg_len - Total data Length - cipher text || padding || length block
 /// @param aad_len - aad data length 
 /// @param key - Master key for Encryption and Authentication
@@ -691,17 +688,12 @@ int32_t hmac_aead_dec(uint8_t *enc_msg, size_t enc_msg_len, uint8_t *aad,
                         size_t aad_len, const uint8_t *tag, const uint8_t *key, 
                         const uint8_t *iv, uint8_t *dec_msg, size_t *dec_msg_len)
 {
-    uint8_t* cipther_text = NULL;
-    size_t len_cipher_text = 0;
-
     uint8_t prk[SIZE_PRK] = {0};
     uint8_t key_dec[SIZE_ENC_KEY] = {0};
     uint8_t key_auth[SIZE_AUTH_KEY] = {0};
 
     uint8_t b_enc[SIZE_IV];
     uint8_t b_auth[SIZE_IV];
-
-    uint8_t key_stream[SIZE_SHA256_OUTPUT_BLOCK] = {0};
 
     size_t msg_len = 0;
 

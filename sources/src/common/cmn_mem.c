@@ -128,7 +128,7 @@ int32_t cmn_memset(uint8_t *buf, uint8_t val, size_t len)
 /// @param len - Length of the data to be xored
 /// @return 0 - Sucess, -1 - Fail
 ///////////////////////////////////////////////////////////////////// 
-int32_t cmn_memxor(uint8_t *a, uint8_t *b, uint8_t *res, size_t len)
+int32_t cmn_memxor(const uint8_t *a, const uint8_t *b, uint8_t *res, size_t len)
 {
     if ((NULL == a) || (NULL == b) || (NULL == res) )
     {

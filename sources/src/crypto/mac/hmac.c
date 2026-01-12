@@ -117,7 +117,7 @@ int32_t hmac_sha256_multi(const uint8_t *key, uint8_t key_size,
     uint8_t inner_digest[HMAC_OUTPUT_BLOCK_SIZE] = {0};
  
     sha256_ctx ctx;
-    uint32_t i, j;
+    uint32_t i;
 
     // Validate inputs
     if ( (key == NULL) || (buffers == NULL) || (hmac == NULL) ||

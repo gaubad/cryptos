@@ -113,20 +113,23 @@ static int run_test_case(size_t msg_len, size_t aad_len)
         &dec_len) == HMAC_ENC_OK, "Decryption failed \n");
 
     ASSERT(dec_len == msg_len, "Decrypted length mismatch");
-    ASSERT(memcmp(msg, decrypted, msg_len) == 0, "Plaintext mismatch");    
-
-    // --- Tamper ciphertext --- 
-    ciphertext[0] ^= 0x01;
-    ASSERT(hmac_aead_dec(
-        ciphertext, ct_len,
-        aad, aad_len,        
-        tag,
-        master_key,
-        iv,
-        decrypted,
-        &dec_len) == HMAC_ENC_AUTH_VERIFY_FAILED,
-        "Ciphertext tampering not detected \n");
-    ciphertext[0] ^= 0x01;
+    ASSERT(memcmp(msg, decrypted, msg_len) == 0, "Plaintext mismatch"); 
+    
+     // --- Tamper ciphertext ---     
+    if (msg_len != 0)
+    {
+        ciphertext[0] ^= 0x01;
+        ASSERT(hmac_aead_dec(
+            ciphertext, ct_len,
+            aad, aad_len,        
+            tag,
+            master_key,
+            iv,
+            decrypted,
+            &dec_len) == HMAC_ENC_AUTH_VERIFY_FAILED,
+            "Ciphertext tampering not detected \n");
+        ciphertext[0] ^= 0x01;
+    }
 
     // --- Tamper tag --- 
     tag[0] ^= 0x01;
@@ -141,17 +144,20 @@ static int run_test_case(size_t msg_len, size_t aad_len)
         "Tag tampering not detected \n");
     tag[0] ^= 0x01;
 
-    // --- Tamper AAD --- 
-    aad[0] ^= 0x01;
-    ASSERT(hmac_aead_dec(
-        ciphertext, ct_len,
-        aad, aad_len,        
-        tag,
-        master_key,
-        iv,
-        decrypted,
-        &dec_len) == HMAC_ENC_AUTH_VERIFY_FAILED,
-        "AAD tampering not detected \n");  
+    // --- Tamper AAD ---    
+    if (aad_len != 0)
+    {
+        aad[0] ^= 0x01;
+        ASSERT(hmac_aead_dec(
+            ciphertext, ct_len,
+            aad, aad_len,        
+            tag,
+            master_key,
+            iv,
+            decrypted,
+            &dec_len) == HMAC_ENC_AUTH_VERIFY_FAILED,
+            "AAD tampering not detected \n");
+    }         
 
     printf("Passed\n\n");  
     return 0;
@@ -169,6 +175,8 @@ int main()
     run_test_case(64, 64);
     run_test_case(260, 128);
     run_test_case(1024, 35);
+    run_test_case(1024, 1);
+    run_test_case(1024, 0);
 
     printf("******Done******\n\n");
 
