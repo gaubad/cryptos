@@ -3,8 +3,8 @@
  *  File: main.c
  *
  *  Description:
- *      This is the entry and test code for reference implementation of a 
- *      hash-based AEAD construction using HMAC-SHA256 for encryption and 
+ *      This is the entry and test code for reference implementation of a
+ *      hash-based AEAD construction using HMAC-SHA256 for encryption and
  *      authentication.
  *
  *  Copyright (c) 2026 Deepak Gauba
@@ -30,24 +30,28 @@
 #include <stddef.h>
 #include "hmac_aead.h"
 
-
-#define ASSERT(cond, msg) \
-    do { if (!(cond)) { printf("FAIL: %s\n", msg); return -1; } } while (0)
+#define ASSERT(cond, msg)              \
+    do                                 \
+    {                                  \
+        if (!(cond))                   \
+        {                              \
+            printf("FAIL: %s\n", msg); \
+            return -1;                 \
+        }                              \
+    } while (0)
 
 #define BLOCK_SIZE 64
-#define TAG_SIZE   32
+#define TAG_SIZE 32
 
-#define MAX_MSG_LENGTH  1024
-#define MAX_AAD_LENGTH  256
-
+#define MAX_MSG_LENGTH 1024
+#define MAX_AAD_LENGTH 256
 
 // Test Master key - 32 bytes
 static const uint8_t master_key[32] = {
-    0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
-    0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-    0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,
-    0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F
-};
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F};
 
 //////////////////////////////////////
 // Verify the HMAc-AEAD outputs
@@ -56,9 +60,12 @@ static size_t expected_ciphertext_len(size_t msg_len)
 {
     size_t rem = msg_len % BLOCK_SIZE;
 
-    if (rem <= 48) {
+    if (rem <= 48)
+    {
         return msg_len + (BLOCK_SIZE - rem);
-    } else {
+    }
+    else
+    {
         /* Pad to block + add one full length block */
         return msg_len + (BLOCK_SIZE - rem) + BLOCK_SIZE;
     }
@@ -79,94 +86,95 @@ static int run_test_case(size_t msg_len, size_t aad_len)
     size_t ct_len = 0;
     size_t dec_len = 0;
 
-    for (size_t i = 0; i < msg_len; i++) 
+    for (size_t i = 0; i < msg_len; i++)
     {
         msg[i] = (uint8_t)(i & 0xFF);
     }
 
     for (size_t i = 0; i < aad_len; i++)
-    {  
+    {
         aad[i] = (uint8_t)(0xA0 + i);
     }
 
     printf("Test: msg_len=%zu, aad_len=%zu\n", msg_len, aad_len);
 
-  
     ASSERT(hmac_aead_enc(
-        msg, msg_len,
-        aad, aad_len,        
-        master_key,
-        ciphertext, sizeof(ciphertext),
-        &ct_len,
-        iv, tag) == HMAC_ENC_OK, "Encryption failed \n");
+               msg, msg_len,
+               aad, aad_len,
+               master_key,
+               ciphertext, sizeof(ciphertext),
+               &ct_len,
+               iv, tag) == HMAC_AEAD_OK,
+           "Encryption failed \n");
 
-    ASSERT( (ct_len + aad_len) == expected_ciphertext_len(msg_len + aad_len),
+    ASSERT((ct_len + aad_len) == expected_ciphertext_len(msg_len + aad_len),
            "Unexpected ciphertext length");
 
     ASSERT(hmac_aead_dec(
-        ciphertext, ct_len,
-        aad, aad_len,        
-        tag,
-        master_key,
-        iv,
-        decrypted,
-        &dec_len) == HMAC_ENC_OK, "Decryption failed \n");
+               ciphertext, ct_len,
+               aad, aad_len,
+               tag,
+               master_key,
+               iv,
+               decrypted,
+               &dec_len) == HMAC_AEAD_OK,
+           "Decryption failed \n");
 
     ASSERT(dec_len == msg_len, "Decrypted length mismatch");
-    ASSERT(memcmp(msg, decrypted, msg_len) == 0, "Plaintext mismatch"); 
-    
-     // --- Tamper ciphertext ---     
+    ASSERT(memcmp(msg, decrypted, msg_len) == 0, "Plaintext mismatch");
+
+    // --- Tamper ciphertext ---
     if (msg_len != 0)
     {
         ciphertext[0] ^= 0x01;
         ASSERT(hmac_aead_dec(
-            ciphertext, ct_len,
-            aad, aad_len,        
-            tag,
-            master_key,
-            iv,
-            decrypted,
-            &dec_len) == HMAC_ENC_AUTH_VERIFY_FAILED,
-            "Ciphertext tampering not detected \n");
+                   ciphertext, ct_len,
+                   aad, aad_len,
+                   tag,
+                   master_key,
+                   iv,
+                   decrypted,
+                   &dec_len) == HMAC_AEAD_AUTH_VERIFY_FAILED,
+               "Ciphertext tampering not detected \n");
         ciphertext[0] ^= 0x01;
     }
 
-    // --- Tamper tag --- 
+    // --- Tamper tag ---
     tag[0] ^= 0x01;
     ASSERT(hmac_aead_dec(
-        ciphertext, ct_len,
-        aad, aad_len,        
-        tag,
-        master_key,
-        iv,
-        decrypted,
-        &dec_len) == HMAC_ENC_AUTH_VERIFY_FAILED,
-        "Tag tampering not detected \n");
+               ciphertext, ct_len,
+               aad, aad_len,
+               tag,
+               master_key,
+               iv,
+               decrypted,
+               &dec_len) == HMAC_AEAD_AUTH_VERIFY_FAILED,
+           "Tag tampering not detected \n");
     tag[0] ^= 0x01;
 
-    // --- Tamper AAD ---    
+    // --- Tamper AAD ---
     if (aad_len != 0)
     {
         aad[0] ^= 0x01;
         ASSERT(hmac_aead_dec(
-            ciphertext, ct_len,
-            aad, aad_len,        
-            tag,
-            master_key,
-            iv,
-            decrypted,
-            &dec_len) == HMAC_ENC_AUTH_VERIFY_FAILED,
-            "AAD tampering not detected \n");
-    }         
+                   ciphertext, ct_len,
+                   aad, aad_len,
+                   tag,
+                   master_key,
+                   iv,
+                   decrypted,
+                   &dec_len) == HMAC_AEAD_AUTH_VERIFY_FAILED,
+               "AAD tampering not detected \n");
+    }
 
-    printf("Passed\n\n");  
+    printf("Passed\n\n");
     return 0;
 }
 
 /////////////////////////////////////////////////
 // Enrty point for HMAC AEAD and Crypto tests
 ////////////////////////////////////////////////
-int main() 
+int main()
 {
     printf("***** Starting HMAC AEAD Tests ******** \n\n");
 
@@ -182,27 +190,27 @@ int main()
 
     /*
 
-    // Tests for SHA256 and HMAC 
-    uint8_t data_to_be_hashed[32] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
-                                      0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 
-                                      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
+    // Tests for SHA256 and HMAC
+    uint8_t data_to_be_hashed[32] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                                      0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+                                      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
                                       0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
                                     };
 
     uint8_t hmac_key[32]          = { 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-                                      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,                                
-                                      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
+                                      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                                      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
                                       0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
                                     };
-                                    
-    // Hash result    
+
+    // Hash result
     uint8_t hash_value[32] = {0};
     // Get Hash of the test data
     sha256_hash( data_to_be_hashed, 32, hash_value);
 
-    // hashed output 
+    // hashed output
     printf("SHA256 hash = ");
-    for (uint8_t i = 0; i < 32; i++) 
+    for (uint8_t i = 0; i < 32; i++)
     {
         printf("%02x", hash_value[i]);
     }
@@ -211,11 +219,11 @@ int main()
 
     // Get HMAC of the test data
     hmac_sha256(data_to_be_hashed, 32, hmac_key, 32, hash_value);
-  
 
-    // hashed output 
+
+    // hashed output
     printf("HMAC = ");
-    for (uint8_t i = 0; i < 32; i++) 
+    for (uint8_t i = 0; i < 32; i++)
     {
         printf("%02x", hash_value[i]);
     }
@@ -224,4 +232,3 @@ int main()
 
     return 0;
 }
-

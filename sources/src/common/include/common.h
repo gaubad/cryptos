@@ -4,11 +4,13 @@
 #include <stdio.h>
 #include <stdint.h>
 
+// clang-format off
 #define COMMON_OK                       0
 #define COMMON_ERR_NULL                 -1
 #define COMMON_ERR_LEN                  -2
 #define COMMON_ERR_MISMATCH             -3
 #define COMMON_GENERAL_FAILURE          -4
+// clang-format on
 
 // Memory manipulation functions
 int32_t cmn_memcpy(uint8_t *dst, const uint8_t *src, size_t len);
